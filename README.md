@@ -30,4 +30,19 @@ We'll try to cover:
 Architecture Overview
 =====================
 
-At its core reverserl has 
+At its core reverserl has a gen_server that handles incoming requests to perform string
+reversal operations.
+
+Each request needs to happen within a session:
+
+- Client creates a session with server
+- Server responds with a session id
+- Client uses session id to call string reversal service
+- Client closes the session
+
+On top of that each session should have a timeout to ensure that it is closed even if the
+client forgets to do so. Moreover, if a client tries to connect without a session id or with
+an invalid session id the server should not allow it to call its string reversal service.
+
+A simple HTTP-based protocol will be used to implement the exchanges between the server and
+its clients.
