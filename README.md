@@ -105,8 +105,9 @@ Source files go under the _src_ directory.
 
 An OTP application is the standard way of implemention applications in Erlang. More information
 is available here: http://www.erlang.org/doc/design_principles/applications.html. An OTP supervisor
-is a specialized Erlang process that is responsible to monitor the lifetime of children processes
-and act accordingly if they crash (i.e. restart them, ...).
+(http://www.erlang.org/doc/design_principles/sup_princ.html) is a specialized Erlang process that
+is responsible to monitor the lifetime of children processes and act accordingly if they crash
+(i.e. restart them, ...).
 
 Here we used rebar to have it generate pre-populated source files from its built-in template files.
 Although they should compile file, we'll need to tweak them a little so that they actually do something.
@@ -121,7 +122,7 @@ You should see something like:
     Compiled src/reverserl_app.erl
     Compiled src/reverserl_sup.erl
 
-This created compiled Erlang bytecode files under the _ebin_ directory:
+This created compiled Erlang bytecode files (along with the processed .app file) under the _ebin_ directory:
 
     /ebin
     ./ebin/reverserl.app
