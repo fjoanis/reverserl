@@ -68,8 +68,8 @@ For the HTTP portion we'll be using the built-in Erlang web server. However, the
 other very good open source web servers if you want to play with them (mochiweb, yaws, cowboy,
 webmachine, ...).
 
-Step 1 - Creating a rebar application
-=====================================
+Step 0 - Install Erlang and rebar
+=================================
 
 This assumes that you have Erlang installed on your system. You can install it from source or
 from pre-compiled binaries (from either http://www.erlang.org or http://www.erlang-solutions.com).
@@ -77,6 +77,54 @@ from pre-compiled binaries (from either http://www.erlang.org or http://www.erla
 - Install rebar from github
   - git clone https://github.com/basho/rebar.git
   - cd rebar; ./bootstrap.sh
-- Put the generated rebar executable into your path
+  - Put the generated rebar executable into your path or directly within the project directory we'll
+    create next
 
-TODO
+Step 1 - Create the core source files using rebar
+=================================================
+
+Our application will reside in its own directory:
+
+    mkdir reverserl
+
+Using rebar, create the core application source files:
+
+    cd reverserl
+    rebar create-app appid=reverserl
+
+You should see something like:
+
+    ==> reverserl (create-app)
+    Writing src/reverserl.app.src
+    Writing src/reverserl_app.erl
+    Writing src/reverserl_sup.erl
+
+This created two Erlang source files for two standard OTP components: an _application_ and a
+_supervisor_. The third file (.app.src) will contain some metadata regarding the application.
+Source files go under the _src_ directory.
+
+An OTP application is the standard way of implemention applications in Erlang. More information
+is available here: http://www.erlang.org/doc/design_principles/applications.html. An OTP supervisor
+is a specialized Erlang process that is responsible to monitor the lifetime of children processes
+and act accordingly if they crash (i.e. restart them, ...).
+
+Here we used rebar to have it generate pre-populated source files from its built-in template files.
+Although they should compile file, we'll need to tweak them a little so that they actually do something.
+
+To compile the current _rebarized_ project:
+
+    rebar compile
+
+You should see something like:
+
+    ==> reverserl (compile)
+    Compiled src/reverserl_app.erl
+    Compiled src/reverserl_sup.erl
+
+This created compiled Erlang bytecode files under the _ebin_ directory:
+
+    /ebin
+    ./ebin/reverserl.app
+    ./ebin/reverserl_app.beam
+    ./ebin/reverserl_sup.beam
+
