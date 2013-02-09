@@ -71,6 +71,12 @@ webmachine, ...).
 Step 1 - Creating a rebar application
 =====================================
 
-This assumes that you have Erlang installed on your system.
+This assumes that you have Erlang installed on your system. You can install it from source or
+from pre-compiled binaries (from either http://www.erlang.org or http://www.erlang-solutions.com).
 
-TODO...
+- Install rebar from github
+  - git clone https://github.com/basho/rebar.git
+  - cd rebar; ./bootstrap.sh
+- Put the generated rebar executable into your path
+
+TODO
