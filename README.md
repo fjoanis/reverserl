@@ -129,3 +129,10 @@ This created compiled Erlang bytecode files (along with the processed .app file)
     ./ebin/reverserl_app.beam
     ./ebin/reverserl_sup.beam
 
+On top of that, we'll also need the following:
+
+- The actual server that will listen for incoming for incoming requests
+  - That is, _business logic_ requests and not HTTP requests. We'll add those later.
+- The core that will be executed when a new session is created.
+
+TODO
