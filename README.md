@@ -55,12 +55,14 @@ The core of the application will be an Erlang gen_server which will handle the l
 - Session creation requests
 - Session destruction requests
 - Session timeout detection
-- Manage the actual lifetime of the sessions
+- Management of the actual lifetime of the sessions
 
 The last point is important here since we'll be leveraging Erlang's lightweight processes:
 each session will be represented by an actual Erlang process. We'll see that this is an
 extremely natural fit and that Erlang makes programming things as they would occur in
 real life easy.
+
+The actual work of reversing the strings will thus be done by each session's process.
 
 For the HTTP portion we'll be using the built-in Erlang web server. However, there are a few
 other very good open source web servers if you want to play with them (mochiweb, yaws, cowboy,
