@@ -27,10 +27,10 @@ We'll try to cover:
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
 
-Architecture Overview
+Functional Overview
 =====================
 
-At its core reverserl has a gen_server that handles incoming requests to perform string
+At its core reverserl has a server that handles incoming requests to perform string
 reversal operations.
 
 Each request needs to happen within a session:
@@ -46,3 +46,29 @@ an invalid session id the server should not allow it to call its string reversal
 
 A simple HTTP-based protocol will be used to implement the exchanges between the server and
 its clients.
+
+Architectural Overview
+======================
+
+The core of the application will be an Erlang gen_server which will handle the logic for:
+
+- Session creation requests
+- Session destruction requests
+- Session timeout detection
+- Manage the actual lifetime of the sessions
+
+The last point is important here since we'll be leveraging Erlang's lightweight processes:
+each session will be represented by an actual Erlang process. We'll see that this is an
+extremely natural fit and that Erlang makes programming things as they would occur in
+real life easy.
+
+For the HTTP portion we'll be using the built-in Erlang web server. However, there are a few
+other very good open source web servers if you want to play with them (mochiweb, yaws, cowboy,
+webmachine, ...).
+
+Step 1 - Creating a rebar application
+=====================================
+
+This assumes that you have Erlang installed on your system.
+
+TODO...
