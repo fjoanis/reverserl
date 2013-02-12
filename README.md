@@ -133,6 +133,25 @@ On top of that, we'll also need the following:
 
 - The actual server that will listen for incoming for incoming requests
   - That is, _business logic_ requests and not HTTP requests. We'll add those later.
-- The core that will be executed when a new session is created.
+- The processes that will be executed when a new session is created. These will be spawned by the
+  core server - one per session. They will carry out the actual string reversal work.
+
+Start with the core server. It will use the rebar template for an OTP gen_server:
+
+    rebar create template=simplesrv srvid="reverserl_server"
+
+You should see:
+
+    ==> reverserl (create)
+    Writing src/reverserl_server.erl
+
+Repeat for the session process:
+
+    rebar create template=simplesrv srvid="reverserl_session"
+
+You should see:
+
+    ==> reverserl (create)
+    Writing src/reverserl_session.erl
 
 TODO
