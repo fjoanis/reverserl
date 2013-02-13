@@ -149,9 +149,26 @@ Repeat for the session process:
 
     rebar create template=simplesrv srvid="reverserl_session"
 
-You should see:
+Again, you should see:
 
     ==> reverserl (create)
     Writing src/reverserl_session.erl
 
-TODO
+Now everything should still compile:
+
+    rebar clean
+    rebar compile
+
+Should yield:
+
+    ==> reverserl (clean)
+    ==> reverserl (compile)
+    Compiled src/reverserl_session.erl
+    Compiled src/reverserl_sup.erl
+    Compiled src/reverserl_server.erl
+    Compiled src/reverserl_app.erl
+
+Step 2 - Initial implementation
+===============================
+
+Now is the time to actually get acquainted with some code!
