@@ -174,7 +174,7 @@ Step 2 - Initial implementation
 Now is the time to actually get acquainted with some code!
 
 For each file listed here, feel free to read each description then dive into the actual
-file to look at its source.
+file to look at its source. They should also include useful comments :)
 
 src/reverserl.app.src
 ---------------------
