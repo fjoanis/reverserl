@@ -172,3 +172,16 @@ Step 2 - Initial implementation
 ===============================
 
 Now is the time to actually get acquainted with some code!
+
+For each file listed here, feel free to read each description then dive into the actual
+file to look at its source.
+
+src/reverserl.app.src
+---------------------
+
+This file contains the description of the application. It will be used by OTP's application
+module when we'll be starting the actual app later. Using that file, Erlang will be able to
+know things such as the name and version of our app, but also which other applications need
+to be started so that reverserl can run. More information is available here:
+http://www.erlang.org/doc/design_principles/applications.html#appl_res_file
+
