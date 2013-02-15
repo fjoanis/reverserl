@@ -1,4 +1,9 @@
-practical_erlang_tutorial
+DISCLAIMER
+==========
+
+This is still work in progress and it is not complete yet.
+
+reverserl
 =========================
 
 A practical tutorial about how to program with Erlang.
