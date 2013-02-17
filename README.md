@@ -32,7 +32,7 @@ We'll try to cover:
 - Generating documentation using rebar and edoc
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
-- Using dializer to perform static code analysis
+- Using dialyzer to perform static code analysis
 
 Functional Overview
 =====================
