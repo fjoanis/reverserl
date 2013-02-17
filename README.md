@@ -29,6 +29,7 @@ We'll try to cover:
 - Some of OTP's principles (gen_server, application, ...)
 - Basics of functional programming with Erlang
 - The rebar build tool for Erlang
+- Generating documentation using rebar and edoc
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
 
