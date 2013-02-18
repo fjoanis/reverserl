@@ -24,5 +24,6 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    io:format("Inside reverserl_sup's init function~n"),
+    {ok, { {one_for_one, 5, 10}, [?CHILD(reverserl_server, worker)]} }.
 

@@ -1,12 +1,22 @@
 {application, reverserl,
  [
-  {description, ""},
+  % Description of the application
+  {description, "String reversal server"},
+  % Version of the application
   {vsn, "1"},
+  % All names of registered processes in the application.
+  % A registered process is a process that can be contacted
+  % using its name (and not only its PID)
   {registered, []},
+  % List of applications that reverserl depends on
   {applications, [
                   kernel,
                   stdlib
                  ]},
+  % Actual module that implements the application
+  % and its start arguments
   {mod, { reverserl_app, []}},
+  % Application environment/config that can be supplied
+  % to the application (accessed by application:get_env)
   {env, []}
  ]}.
