@@ -1,4 +1,9 @@
-practical_erlang_tutorial
+DISCLAIMER
+==========
+
+This is still work in progress and it is not complete yet.
+
+reverserl
 =========================
 
 A practical tutorial about how to program with Erlang.
@@ -24,8 +29,10 @@ We'll try to cover:
 - Some of OTP's principles (gen_server, application, ...)
 - Basics of functional programming with Erlang
 - The rebar build tool for Erlang
+- Generating documentation using rebar and edoc
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
+- Using dialyzer to perform static code analysis
 
 Functional Overview
 =====================
@@ -172,3 +179,16 @@ Step 2 - Initial implementation
 ===============================
 
 Now is the time to actually get acquainted with some code!
+
+For each file listed here, feel free to read each description then dive into the actual
+file to look at its source. They should also include useful comments :)
+
+src/reverserl.app.src
+---------------------
+
+This file contains the description of the application. It will be used by OTP's application
+module when we'll be starting the actual app later. Using that file, Erlang will be able to
+know things such as the name and version of our app, but also which other applications need
+to be started so that reverserl can run. More information is available here:
+http://www.erlang.org/doc/design_principles/applications.html#appl_res_file
+
