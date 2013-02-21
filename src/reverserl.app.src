@@ -11,7 +11,8 @@
   % List of applications that reverserl depends on
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  cowboy
                  ]},
   % Actual module that implements the application
   % and its start arguments

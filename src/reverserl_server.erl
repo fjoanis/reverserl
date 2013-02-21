@@ -32,7 +32,15 @@
 
 %% Exporting functions make them accesible to other modules. Their
 %% arity also needs to be supplied.
--export([start_link/0]).
+%%
+%% It is a best practice to group exports that logically belong
+%% together on the same export line. In this case, the first one
+%% represents the actual APIs that the outside module are expected
+%% to call. The second one, further below, contains the gen_server
+%% internal callbacks. Note that however this doesn't change anything
+%% regarding the accessibility of the functions: they are still all
+%% "public".
+-export([start_link/0, reverse/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -53,6 +61,10 @@ start_link() ->
     % Use the core gen_server API to do the actual start with
     % arguments we control here. 
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+-spec reverse(list(), list()) -> list().
+reverse(_SessionId, String) ->
+    "TODO".
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
