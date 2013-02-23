@@ -40,7 +40,7 @@
 %% internal callbacks. Note that however this doesn't change anything
 %% regarding the accessibility of the functions: they are still all
 %% "public".
--export([start_link/0, reverse/2]).
+-export([start_link/0, create_session/0, delete_session/1, reverse/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -62,15 +62,23 @@ start_link() ->
     % arguments we control here. 
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
+-spec create_session() -> list().
+create_session() ->
+    gen_server:call(?SERVER, create_session).
+
 -spec reverse(list(), list()) -> list().
-reverse(_SessionId, String) ->
-    "TODO".
+reverse(SessionId, String) ->
+    gen_server:call(?SERVER, {reverse, SessionId, String}).
+
+-spec delete_session(list()) -> ok.
+delete_session(SessionId) ->
+    gen_server:call(?SERVER, {delete_session, SessionId}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
--record(state, {children :: list(pid())}).
+-record(state, {sessions = [] :: list({reference(), pid()})}).
 -type state() :: #state{}.
 
 %% @doc This function gets called when the server process will be
@@ -94,8 +102,34 @@ init(_Args) ->
 
 
 -spec handle_call(_, _, state()) -> {reply, ok, state()}.
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call(create_session, _From, State) ->
+    % Spawn (and link) a new session process
+    {ok, {SessionId, SessionPid}} = reverserl_session:start_link(),
+    NewSessionList = [{SessionId, SessionPid}|[State#state.sessions]],
+    {reply, ok, State#state{sessions = NewSessionList}};
+
+handle_call({reverse, SessionId, String}, _From, State) ->
+    % Start by trying to find the session id
+    Result = case proplists:get_value(SessionId, State#state.sessions) of
+        undefined ->
+            % Session is not known
+            error;
+        SessionPid ->
+            % Session is known
+            ok
+    end,
+    {reply, Result, State};
+
+handle_call({delete_session, SessionId}, _From, State) ->
+    % Start by trying to find the session id
+    Result = case proplists:get_value(SessionId, State#state.sessions) of
+        undefined ->
+            % Nothing to do...
+            ok;
+        SessionPid ->
+            reverserl_session:stop(SessionPid)
+    end,
+    {reply, Result, State}.
 
 -spec handle_cast(_, state()) -> {noreply, state()}.
 handle_cast(_Msg, State) ->
