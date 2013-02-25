@@ -60,6 +60,11 @@ code_change(_OldVsn, Timeout, _Extra) ->
 
 do_reverse([]) ->
     [];
+
+%% Uncomment this to show a bug that would be caught by QuickCheck
+%do_reverse([_, _, _, _, _, _, _]) ->
+%    bug;
+
 do_reverse(String) ->
     do_reverse(String, "").
 

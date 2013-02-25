@@ -1,5 +1,6 @@
 -module(reverserl_session_tests).
 
+-include_lib("eqc/include/eqc.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 -compile(export_all).
@@ -24,7 +25,8 @@ reverserl_test_() ->
      [
          ?_test(simple_session_check()),
          ?_test(simple_session_timeout_check()),
-         ?_test(simple_session_timeout_after_op_check())
+         ?_test(simple_session_timeout_after_op_check()),
+         ?_test(prop_string_reversal_check())
      ]
     }.
 
@@ -74,4 +76,17 @@ simple_session_timeout_after_op_check() ->
     % Expect 3 seconds to have elapsed
     3 = SecsAfter - SecsBefore,
 
+    ok = reverserl_session:stop(SessionPid).
+
+string() -> list(oneof(lists:seq($a, $z) ++ lists:seq($A, $Z) ++ lists:seq($1, $9))).
+
+prop_string_reversal(SessionPid) ->
+    ?FORALL({Input}, {string()},
+        begin
+            lists:reverse(Input) =:= reverserl_session:reverse(SessionPid, Input)
+        end).
+
+prop_string_reversal_check() ->
+    {ok, SessionPid} = reverserl_session:start_link(2000),
+    true = eqc:quickcheck(prop_string_reversal(SessionPid)),
     ok = reverserl_session:stop(SessionPid).
