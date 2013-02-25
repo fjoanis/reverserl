@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/1, stop/1, reverse/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -19,32 +19,52 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Timeout) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Timeout], []).
+
+stop(Pid) ->
+    gen_server:cast(Pid, stop).
+
+reverse(Pid, String) ->
+    gen_server:call(Pid, {reverse, String}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init(Args) ->
-    {ok, Args}.
+init([Timeout]) ->
+    io:format("reverserl_session:init~n"),
+    erlang:process_flag(trap_exit, true),
+    {ok, Timeout, Timeout}.
 
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call({reverse, String}, _From, Timeout) ->
+    {reply, do_reverse(String), Timeout, Timeout}.
 
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+handle_cast(stop, Timeout) ->
+    {stop, normal, Timeout}.
 
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(timeout, Timeout) ->
+    % Timeout detected, terminate the server
+    {stop, normal, Timeout}.
 
-terminate(_Reason, _State) ->
+terminate(Reason, _Timeout) ->
+    io:format("reverserl_session:terminate - Reason: ~p~n", [Reason]),
     ok.
 
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
+code_change(_OldVsn, Timeout, _Extra) ->
+    {ok, Timeout}.
 
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+do_reverse([]) ->
+    [];
+do_reverse(String) ->
+    do_reverse(String, "").
+
+do_reverse([], Result) ->
+    Result;
+do_reverse([H|T], Result) ->
+    do_reverse(T, [H|Result]).
 

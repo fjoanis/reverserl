@@ -62,7 +62,7 @@ start_link() ->
     % arguments we control here. 
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
--spec create_session() -> list().
+-spec create_session() -> {ok, list()}.
 create_session() ->
     gen_server:call(?SERVER, create_session).
 
@@ -104,9 +104,10 @@ init(_Args) ->
 -spec handle_call(_, _, state()) -> {reply, ok, state()}.
 handle_call(create_session, _From, State) ->
     % Spawn (and link) a new session process
-    {ok, {SessionId, SessionPid}} = reverserl_session:start_link(),
+    {ok, SessionPid} = reverserl_session:start_link(),
+    SessionId = make_ref(),
     NewSessionList = [{SessionId, SessionPid}|[State#state.sessions]],
-    {reply, ok, State#state{sessions = NewSessionList}};
+    {reply, {ok, SessionId}, State#state{sessions = NewSessionList}};
 
 handle_call({reverse, SessionId, String}, _From, State) ->
     % Start by trying to find the session id
