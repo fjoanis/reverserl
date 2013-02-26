@@ -17,7 +17,7 @@
 start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
         {'_', [
-            {"/", reverserl_http_handler, []}
+            {"/reverserl/[:session_id]", reverserl_http_handler, []}
         ]}
     ]),
 
