@@ -20,7 +20,7 @@
 %% ------------------------------------------------------------------
 
 start_link(Timeout) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Timeout], []).
+    gen_server:start_link(?MODULE, [Timeout], []).
 
 stop(Pid) ->
     gen_server:cast(Pid, stop).

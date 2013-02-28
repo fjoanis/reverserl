@@ -108,6 +108,7 @@ init(_Args) ->
     % not used and we do not want the compiler to complain about it.
     % _ means "don't care"
     SessionTable = ets:new(sessions, []),
+
     {ok, #state{sessions = SessionTable}}.
 
 

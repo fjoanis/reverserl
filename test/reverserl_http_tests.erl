@@ -20,33 +20,70 @@ teardown(_) ->
     application:stop(crypto).
 
 %% This describes a fixture with arguments such as setup/teardown
-reverserl_test_() ->
+reverserl_simple_test_() ->
     {setup,
      fun setup/0,
      fun teardown/1,
      [
-         ?_test(simple_session_check())
+         fun() ->
+            % Start by creating a new session
+            {ok, {{_HttpVersion, 201, _Reason}, _Headers, Body}} = httpc:request(post, {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
+            SessionId = lists:flatten(Body),
+
+            % The SessionId should not be empty
+            false = [] =:= SessionId,
+
+            % Now get ready to query the service
+            String = "allo",
+            {ok, {{_, 200, _}, _, Body2}} = httpc:request(get, {"http://127.0.0.1:8080/reverserl/" ++ SessionId ++ "?string=" ++ String, []}, [], []),
+            "olla" = lists:flatten(Body2),
+    
+            1 = reverserl_server:active_sessions(),
+
+            % Then close the session
+            {ok, {{_, 204, _}, _, []}} = httpc:request(delete, {"http://127.0.0.1:8080/reverserl/" ++ SessionId, []}, [], []),
+
+            % The session should be truly closed - i.e. cannot be found anymore in reverserl_server
+            error = reverserl_server:reverse(SessionId, ""),
+            0 = reverserl_server:active_sessions(),
+            1 = reverserl_server:sessions_serviced()
+        end
      ]
     }.
 
-simple_session_check() ->
-    % Start by creating a new session
-    {ok, {{_HttpVersion, 201, _Reason}, _Headers, Body}} = httpc:request(post, {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
-    SessionId = lists:flatten(Body),
+reverserl_multiple_test_() ->
+    {setup,
+     fun setup/0,
+     fun teardown/1,
+     [
+        fun() ->
+            % Start by creating 20 sessions
+            F = fun(_, Acc) ->
+                {ok, {{_, 201, _}, _, Body}} = httpc:request(post, {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
+                SessionId = lists:flatten(Body),
+                [SessionId|Acc]
+            end,
+            Sessions = lists:foldl(F, [], lists:seq(1, 20)),
 
-    % The SessionId should not be empty
-    false = [] =:= SessionId,
+            % Ensure all sessions were created
+            20 = reverserl_server:active_sessions(),
 
-    % Now get ready to query the service
-    String = "allo",
-    {ok, {{_, 200, _}, _, Body2}} = httpc:request(get, {"http://127.0.0.1:8080/reverserl/" ++ SessionId ++ "?string=" ++ String, []}, [], []),
-    "olla" = lists:flatten(Body2),
+            % Now run some queries against the sessions
+            lists:foreach(fun(SessionId) ->
+                {ok, {{_, 200, _}, _, Body2}} = httpc:request(get, {"http://127.0.0.1:8080/reverserl/" ++ SessionId ++ "?string=allo", []}, [], []),
+                "olla" = lists:flatten(Body2)
+                end,
+                Sessions
+            ),
+            20 = reverserl_server:sessions_serviced(),
 
-    % Then close the session
-    {ok, {{_, 204, _}, _, []}} = httpc:request(delete, {"http://127.0.0.1:8080/reverserl/" ++ SessionId, []}, [], []),
-
-    % The session should be truly closed - i.e. cannot be found anymore in reverserl_server
-    error = reverserl_server:reverse(SessionId, ""),
-    0 = reverserl_server:active_sessions(),
-    1 = reverserl_server:sessions_serviced().
-
+            % Shutdown the sessions
+            lists:foreach(fun(SessionId) ->
+                {ok, {{_, 204, _}, _, []}} = httpc:request(delete, {"http://127.0.0.1:8080/reverserl/" ++ SessionId, []}, [], [])
+                end,
+                Sessions
+            ),
+            0 = reverserl_server:active_sessions()
+        end
+     ]
+    }.

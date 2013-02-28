@@ -6,13 +6,10 @@
 
 %% @doc This gets called when the request first arrives
 init(_Transport, Req, []) ->
-    io:format("reverserl_http_handler:init~n"),
     {ok, Req, undefined}.
 
 %% @doc This gets called when the request actually needs to be handled 
 handle(Req, State) ->
-    io:format("reverserl_http_handler:handle~n"),
-
     {Method, _} = cowboy_req:method(Req),
     {SessionIdRaw, _} = cowboy_req:binding(session_id, Req),
 
@@ -46,7 +43,6 @@ handle(Req, State) ->
 
 %% @doc This gets called when the request gets terminated (i.e. ends)
 terminate(_Reason, _Req, _State) ->
-    io:format("reverserl_http_handler:terminate~n"),
     ok.
 
 handle_post(Req) ->
