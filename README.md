@@ -6,6 +6,8 @@ A practical tutorial about how to program with Erlang.
 The goal of this example is to show how to create an Erlang project that isn't
 too far from an actual real-world application.
 
+* This is still work in progress. See TODO list at the end. *
+
 License
 =======
 
@@ -247,9 +249,46 @@ The additional argument given to the second command ensures that the unit tests
 for the dependencies are not run. If you want to run them - which would be a
 good idea - simply remove the skip_dep bit. 
 
+Launching the code manually
+---------------------------
+
+    erl -pa ebin -pa deps/ranch/ebin -pa deps/cowboy/ebin
+
+    Erlang R15B03 (erts-5.9.3.1) [source] [smp:4:4] [async-threads:0] [hipe] [kernel-poll:false]
+    Eshell V5.9.3.1  (abort with ^G)
+    > application:start(crypto).
+    ok
+    > application:start(ranch).
+    ok
+    > application:start(cowboy). 
+    ok
+    > application:start(reverserl).
+    Inside reverserl_sup's init function
+    Inside reverserl_server's init function
+    ok
+    > {ok, SessionId1} = reverserl_server:create_session().
+    reverserl_session:init
+    Creating session "136253516338431"
+    {ok,"136253516338431"}
+    > reverserl_server:reverse(SessionId1, "Hello World!").
+    "!dlroW olleH"
+    > reverserl_server:reverse(SessionId1, "Hello World!").
+    "!dlroW olleH"
+    > reverserl_server:delete_session(SessionId1).         
+    Deleting session "136253516338431"
+    reverserl_session:terminate - Reason: normal
+    ok
+
 TODO
 ====
 
+- Add more comments to the code
 - Complete type specifications -
   http://www.erlang.org/doc/reference_manual/typespec.html
+- Show how to run dialyzer
+- Test/show that the supervisor actually work if a crash happens in the main
+  gen_server.
+- Show how to build an Erlang release for the app. A _release_ is like the
+  actual package that can be used to distribute the app.
+- Show how this would work with an IDE like Erlide?
 

@@ -41,7 +41,7 @@
 %% regarding the accessibility of the functions: they are still all
 %% "public".
 -export([start_link/0, create_session/0, delete_session/1, reverse/2,
-         sessions_serviced/0, active_sessions/0]).
+         sessions_serviced/0, active_sessions/0, crash_server/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -82,6 +82,9 @@ sessions_serviced() ->
 -spec active_sessions() -> integer().
 active_sessions() ->
     gen_server:call(?SERVER, active_sessions).
+
+crash_server() ->
+    gen_server:call(?SERVER, unknown_will_crash).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
