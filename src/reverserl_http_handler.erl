@@ -14,21 +14,31 @@ handle(Req, State) ->
     io:format("reverserl_http_handler:handle~n"),
 
     {Method, _} = cowboy_req:method(Req),
-    {SessionId, _} = cowboy_req:binding(session_id, Req),
+    {SessionIdRaw, _} = cowboy_req:binding(session_id, Req),
+
+    SessionId = case SessionIdRaw of
+        Binary when is_binary(Binary) ->
+            binary_to_list(Binary);
+        _ ->
+            SessionIdRaw
+    end,
 
     {ok, Reply} = case {Method, SessionId} of
         {<<"POST">>, undefined} ->
-            io:format("Creating new session...~n"),
-            cowboy_req:reply(200, [], <<>>, Req);
+            handle_post(Req);
         {<<"GET">>, undefined} ->
+            io:format("Session has to be supplied~n"),
             cowboy_req:reply(404, [], <<>>, Req);
         {<<"GET">>, SessionId} ->
-            cowboy_req:reply(200, [], <<>>, Req);
+            {String, _} = cowboy_req:qs_val(<<"string">>, Req),
+            handle_get(Req, SessionId, binary_to_list(String));
         {<<"DELETE">>, undefined} ->
+            io:format("Session has to be supplied~n"),
             cowboy_req:reply(404, [], <<>>, Req);
         {<<"DELETE">>, SessionId} ->
-            cowboy_req:reply(200, [], <<>>, Req);
+            handle_delete(Req, SessionId);
         _ ->
+            io:format("Invalid request received: ~p~n", [Req]),
             cowboy_req:reply(503, [], <<>>, Req)
     end,
 
@@ -38,3 +48,29 @@ handle(Req, State) ->
 terminate(_Reason, _Req, _State) ->
     io:format("reverserl_http_handler:terminate~n"),
     ok.
+
+handle_post(Req) ->
+    {ok, SessionId} = reverserl_server:create_session(),
+    cowboy_req:reply(201, [], list_to_binary(SessionId), Req).
+
+handle_get(Req, _, undefined) ->
+    io:format("String parameter needs to be supplied~n"),
+    cowboy_req:reply(503, [], <<>>, Req);
+handle_get(Req, SessionId, String) ->
+    case reverserl_server:reverse(SessionId, String) of
+        error ->
+            io:format("Could not reverse string~n"),
+            cowboy_req:reply(503, [], <<>>, Req);
+        Result ->
+            cowboy_req:reply(200, [], list_to_binary(Result), Req)
+    end.
+
+handle_delete(Req, SessionId) ->
+    case reverserl_server:delete_session(SessionId) of
+        ok ->
+            cowboy_req:reply(204, [], <<>>, Req);
+        _ ->
+            io:format("Could not find session to DELETE~n"),
+            cowboy_req:reply(404, [], <<>>, Req)
+    end.
+

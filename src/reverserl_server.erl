@@ -40,7 +40,8 @@
 %% internal callbacks. Note that however this doesn't change anything
 %% regarding the accessibility of the functions: they are still all
 %% "public".
--export([start_link/0, create_session/0, delete_session/1, reverse/2]).
+-export([start_link/0, create_session/0, delete_session/1, reverse/2,
+         sessions_serviced/0, active_sessions/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -74,11 +75,19 @@ reverse(SessionId, String) ->
 delete_session(SessionId) ->
     gen_server:call(?SERVER, {delete_session, SessionId}).
 
+-spec sessions_serviced() -> integer().
+sessions_serviced() ->
+    gen_server:call(?SERVER, sessions_serviced).
+
+-spec active_sessions() -> integer().
+active_sessions() ->
+    gen_server:call(?SERVER, active_sessions).
+
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
--record(state, {sessions = [] :: list({reference(), pid()})}).
+-record(state, {sessions_serviced = 0 :: integer(), sessions = undefined :: list({reference(), pid()})}).
 -type state() :: #state{}.
 
 %% @doc This function gets called when the server process will be
@@ -98,37 +107,51 @@ init(_Args) ->
     % prepended to the Args name. This is because this variable is
     % not used and we do not want the compiler to complain about it.
     % _ means "don't care"
-    {ok, #state{}}.
+    SessionTable = ets:new(sessions, []),
+    {ok, #state{sessions = SessionTable}}.
 
 
 -spec handle_call(_, _, state()) -> {reply, ok, state()}.
+handle_call(sessions_serviced, _From, State) ->
+    {reply, State#state.sessions_serviced, State};
+handle_call(active_sessions, _From, State) ->
+    Result = ets:info(State#state.sessions, size),
+    {reply, Result, State};
 handle_call(create_session, _From, State) ->
     % Spawn (and link) a new session process
-    {ok, SessionPid} = reverserl_session:start_link(),
-    SessionId = make_ref(),
-    NewSessionList = [{SessionId, SessionPid}|[State#state.sessions]],
-    {reply, {ok, SessionId}, State#state{sessions = NewSessionList}};
+    {ok, SessionPid} = reverserl_session:start_link(30000),
+    % Note: the following will not be globally unique so don't go
+    % to production with it...
+    {A, B, C} = erlang:now(),
+    SessionId = lists:flatten(io_lib:format("~p~p~p", [A, B, C])),
+    io:format("Creating session ~p~n", [SessionId]),
+    true = ets:insert(State#state.sessions, {SessionId, SessionPid}),
+    NewNumSessions = State#state.sessions_serviced + 1,
+    {reply, {ok, SessionId}, State#state{sessions_serviced = NewNumSessions}};
 
 handle_call({reverse, SessionId, String}, _From, State) ->
     % Start by trying to find the session id
-    Result = case proplists:get_value(SessionId, State#state.sessions) of
+    Result = case find_session_pid(SessionId, State#state.sessions) of
         undefined ->
             % Session is not known
+            io:format("Could not find session ~p~n", [SessionId]),
             error;
         SessionPid ->
             % Session is known
-            ok
+            reverserl_session:reverse(SessionPid, String)
     end,
     {reply, Result, State};
 
 handle_call({delete_session, SessionId}, _From, State) ->
     % Start by trying to find the session id
-    Result = case proplists:get_value(SessionId, State#state.sessions) of
+    Result = case find_session_pid(SessionId, State#state.sessions) of
         undefined ->
             % Nothing to do...
-            ok;
+            error;
         SessionPid ->
-            reverserl_session:stop(SessionPid)
+            io:format("Deleting session ~p~n", [SessionId]),
+            reverserl_session:stop(SessionPid),
+            ok
     end,
     {reply, Result, State}.
 
@@ -137,7 +160,15 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 -spec handle_info(_, state()) -> {noreply, state()}.
-handle_info(_Info, State) ->
+handle_info({'EXIT', SessionPid, _Reason}, State) ->
+    case find_session_id(SessionPid, State#state.sessions) of
+        undefined ->
+            ok;
+        SessionId ->
+            % The PID that terminated was known as a session, so now
+            % remove it from the session table
+            true = ets:delete(State#state.sessions, SessionId)
+    end,
     {noreply, State}.
 
 %% @doc This gets called when the process will be terminated. Like
@@ -160,3 +191,14 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+find_session_pid(SessionId, Sessions) ->
+    case ets:lookup(Sessions, SessionId) of
+        [{SessionId, SessionPid}] -> SessionPid;
+        _ -> undefined
+    end.
+
+find_session_id(SessionPid, Sessions) ->
+    case ets:match(Sessions, {'$1', SessionPid}) of
+        [[SessionId]] -> SessionId;
+        _ -> undefined
+    end.
