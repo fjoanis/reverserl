@@ -1,10 +1,5 @@
-DISCLAIMER
-==========
-
-This is still work in progress and it is not complete yet.
-
 reverserl
-=========================
+=========
 
 A practical tutorial about how to program with Erlang.
 
@@ -21,8 +16,9 @@ Overview
 
 Introducing... reverserl!
 
-Let's build a little Erlang application that does something really simple: reverse strings.
-To show a bit more of what Erlang can do it will also have a simple session based web API.
+Let's build a little Erlang application that does something really simple:
+reverse strings.  To show a bit more of what Erlang can do it should also have
+a simple web API.
 
 We'll try to cover:
 
@@ -33,9 +29,10 @@ We'll try to cover:
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
 - Using dialyzer to perform static code analysis
+- ...
 
 Functional Overview
-=====================
+===================
 
 At its core reverserl has a server that handles incoming requests to perform string
 reversal operations.
@@ -47,50 +44,63 @@ Each request needs to happen within a session:
 - Client uses session id to call string reversal service
 - Client closes the session
 
-On top of that each session should have a timeout to ensure that it is closed even if the
-client forgets to do so. Moreover, if a client tries to connect without a session id or with
-an invalid session id the server should not allow it to call its string reversal service.
+On top of that each session should have a timeout to ensure that it is closed
+even if the client forgets to do so. Moreover, if a client tries to connect
+without a session id or with an invalid session id the server should not allow
+it to call its string reversal service.
 
-A simple HTTP-based protocol will be used to implement the exchanges between the server and
-its clients.
+A simple HTTP-based protocol will be used to implement the exchanges between
+the server and its clients.
 
 Architectural Overview
 ======================
 
-The core of the application will be an Erlang gen_server which will handle the logic for:
+The core of the application is an Erlang gen_server which handles the logic
+for:
 
 - Session creation requests
 - Session destruction requests
-- Session timeout detection
+- Dispatch the session "work" - i.e. the reversal algorithm 
 - Management of the actual lifetime of the sessions
 
-The last point is important here since we'll be leveraging Erlang's lightweight processes:
-each session will be represented by an actual Erlang process. We'll see that this is an
-extremely natural fit and that Erlang makes programming things as they would occur in
-real life easy.
+The last point is important here since it is leveraging Erlang's lightweight
+processes: each session will be represented by an actual Erlang process. We
+should see that this is an extremely natural fit and that Erlang makes
+programming things as they would occur in real life easy because of that
+paradigm.
 
-The actual work of reversing the strings will thus be done by each session's process.
+The actual work of reversing the strings is thus done by each session's process
+and the dispatching of that work is done by the centralized server..
 
-For the HTTP portion we'll be using the built-in Erlang web server. However, there are a few
-other very good open source web servers if you want to play with them (mochiweb, yaws, cowboy,
-webmachine, ...).
+The HTTP portion uses the cowboy web server - https://github.com/extend/cowboy
 
-Step 0 - Install Erlang and rebar
-=================================
+Directory Structure
+===================
 
-This assumes that you have Erlang installed on your system. You can install it from source or
-from pre-compiled binaries (from either http://www.erlang.org or http://www.erlang-solutions.com).
+- reverserl
+  - deps - Where the dependencies specified by rebar reside
+  - src - Where the source code of the application resides
+  - test - Where the "unit" tests reside
+  - ebin - Where the compiled output resides
+  - doc - Where the generated code documentation will reside
+
+Installing Erlang and rebar
+===========================
+
+This assumes that you have Erlang installed on your system. You can install it
+from source or from pre-compiled binaries (from either http://www.erlang.org or
+http://www.erlang-solutions.com).
 
 - Install rebar from github
   - git clone https://github.com/basho/rebar.git
   - cd rebar; ./bootstrap.sh
-  - Put the generated rebar executable into your path or directly within the project directory we'll
-    create next
+  - Put the generated rebar executable into your path or directly within the
+    project directory we'll create next
 
-Step 1 - Create the core source files using rebar
-=================================================
+Create the core source files using rebar
+========================================
 
-Our application will reside in its own directory:
+Our application resides in its own directory:
 
     mkdir reverserl
 
@@ -106,18 +116,20 @@ You should see something like:
     Writing src/reverserl_app.erl
     Writing src/reverserl_sup.erl
 
-This created two Erlang source files for two standard OTP components: an _application_ and a
-_supervisor_. The third file (.app.src) will contain some metadata regarding the application.
-Source files go under the _src_ directory.
+This created two Erlang source files for two standard OTP components: an
+_application_ and a _supervisor_. The third file (.app.src) will contain some
+metadata regarding the application. Source files go under the _src_ directory.
 
-An OTP application is the standard way of implemention applications in Erlang. More information
-is available here: http://www.erlang.org/doc/design_principles/applications.html. An OTP supervisor
-(http://www.erlang.org/doc/design_principles/sup_princ.html) is a specialized Erlang process that
-is responsible to monitor the lifetime of children processes and act accordingly if they crash
-(i.e. restart them, ...).
+An OTP application is the standard way of implemention applications in Erlang.
+More information is available here:
+http://www.erlang.org/doc/design_principles/applications.html. An OTP
+supervisor (http://www.erlang.org/doc/design_principles/sup_princ.html) is a
+specialized Erlang process that is responsible to monitor the lifetime of
+children processes and act accordingly if they crash (i.e. restart them, ...).
 
-Here we used rebar to have it generate pre-populated source files from its built-in template files.
-Although they should compile file, we'll need to tweak them a little so that they actually do something.
+Here we used rebar to have it generate pre-populated source files from its
+built-in template files.  Although they should compile file, we'll need to
+tweak them a little so that they actually do something.
 
 To compile the current _rebarized_ project:
 
@@ -129,21 +141,27 @@ You should see something like:
     Compiled src/reverserl_app.erl
     Compiled src/reverserl_sup.erl
 
-This created compiled Erlang bytecode files (along with the processed .app file) under the _ebin_ directory:
+This created compiled Erlang bytecode files (along with the processed .app
+file) under the _ebin_ directory:
 
     /ebin
     ./ebin/reverserl.app
     ./ebin/reverserl_app.beam
     ./ebin/reverserl_sup.beam
 
-On top of that, we'll also need the following:
+On top of that, we also need the following:
 
-- The actual server that will listen for incoming for incoming requests
-  - That is, _business logic_ requests and not HTTP requests. We'll add those later.
-- The processes that will be executed when a new session is created. These will be spawned by the
-  core server - one per session. They will carry out the actual string reversal work.
+- The actual server that will listen for incoming requests
+  - That is, _business logic_ requests and not HTTP requests. We'll add those
+    later.
+- The processes that will be executed when a new session is created. These will
+  be spawned by the core server - one per session. They will carry out the
+  actual string reversal work.
+- A "bridge" between the HTTP server and the main server that listens for the
+  requests
 
-Start with the core server. It will use the rebar template for an OTP gen_server:
+Start with the core server. It will use the rebar template for an OTP
+gen_server:
 
     rebar create template=simplesrv srvid="reverserl_server"
 
@@ -175,20 +193,63 @@ Should yield:
     Compiled src/reverserl_server.erl
     Compiled src/reverserl_app.erl
 
-Step 2 - Initial implementation
-===============================
+Note that not all Erlang source files can be generated using rebar's templates.
+For example, the HTTP handler module of reverserl was not. This is simply
+because rebar cannot contain templates for every possible module... but it does
+contain templates for some really useful ones. 
+
+Implementation
+==============
 
 Now is the time to actually get acquainted with some code!
 
-For each file listed here, feel free to read each description then dive into the actual
-file to look at its source. They should also include useful comments :)
+- src/reverserl_app.erl
+- src/reverserl_sup.erl
+- src/reverserl_server.erl
+- src/reverserl_session.erl
+- src/reverserl_http_handler.erl
+- test/reverserl_http_tests.erl
+- test/reverserl_session_tests.erl
 
-src/reverserl.app.src
----------------------
+For each file listed above, feel free to look at its source. They should also
+include useful comments :)
 
-This file contains the description of the application. It will be used by OTP's application
-module when we'll be starting the actual app later. Using that file, Erlang will be able to
-know things such as the name and version of our app, but also which other applications need
-to be started so that reverserl can run. More information is available here:
-http://www.erlang.org/doc/design_principles/applications.html#appl_res_file
+Full Compilation
+----------------
+
+    rebar get-deps
+    rebar compile
+
+The first command uses git to fetch the source code of the HTTP server we have
+listed as a dependency.
+
+Testing
+-------
+
+There are two main test files:
+
+    test/reverserl_session_tests.erl
+    test/reverserl_http_tests.erl
+
+Both use the eunit testing framework
+(http://www.erlang.org/doc/apps/eunit/chapter.html) but the first one also
+makes use of QuickCheck Mini (http://www.quviq.com/news100621.html).
+
+QuickCheck Mini implements a framework to do Property Based Testing. There is
+also a GPL equivalent called PropEr (https://github.com/manopapad/proper).
+
+To run the tests, make sure everything compiles then run them using rebar:
+
+    rebar compile
+    rebar eunit skip_deps=true
+
+The additional argument given to the second command ensures that the unit tests
+for the dependencies are not run. If you want to run them - which would be a
+good idea - simply remove the skip_dep bit. 
+
+TODO
+====
+
+- Complete type specifications -
+  http://www.erlang.org/doc/reference_manual/typespec.html
 
