@@ -30,7 +30,6 @@ We'll try to cover:
 - Generating documentation using rebar and edoc
 - Testing using eunit/QuickCheck mini (Proper should work too -
   https://github.com/manopapad/proper)
-- Using dialyzer to perform static code analysis
 - ...
 
 Functional Overview
@@ -290,5 +289,5 @@ TODO
   gen_server.
 - Show how to build an Erlang release for the app. A _release_ is like the
   actual package that can be used to distribute the app.
-- Show how this would work with an IDE like Erlide?
+- Show how this would work with an IDE like Erlide
 
