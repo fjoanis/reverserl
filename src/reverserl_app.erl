@@ -1,7 +1,7 @@
 %% @doc This module implements the OTP application behaviour for
 %% reverserl 
 %%
-%% @author Francis (Ottawa-Gatineau Erlang)
+%% @author Francis (Ottawa Erlang)
 
 -module(reverserl_app).
 

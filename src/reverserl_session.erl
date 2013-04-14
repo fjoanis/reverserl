@@ -1,3 +1,5 @@
+%% @author Francis (Ottawa Erlang)
+
 -module(reverserl_session).
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).

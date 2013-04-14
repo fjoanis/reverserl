@@ -5,9 +5,9 @@
 %% gen_server behaviour which means that it will behave like what
 %% is described here: http://www.erlang.org/doc/man/gen_server.html
 %%
-%% @author Francis (Ottawa-Gatineau Erlang)
+%% @author Francis (Ottawa Erlang)
 
-%% Comments start with a single percent sign (%). Double are
+%% Comments start with a single percent sign (%). Double (i.e. %%) are
 %% considered a good practice when commenting generic parts of the
 %% code but this is most likely strictly cosmetic.
 
@@ -57,29 +57,26 @@
 %% @doc Start the reverserl_server process. This will also register
 %% it with the local name server using the ?SERVER macro. That way,
 %% we'll be able to reach it using its name, reverserl_server.
--spec start_link() -> 'ignore' | {'error',_} | {'ok',pid()}.
 start_link() ->
     % Use the core gen_server API to do the actual start with
     % arguments we control here. 
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
--spec create_session() -> {ok, list()}.
+%% @doc API function to create a new session
 create_session() ->
+    % Note the use of ?SERVER rather than the use of a PID.
+    % This is because the process was registered using its name.
     gen_server:call(?SERVER, create_session).
 
--spec reverse(list(), list()) -> list().
 reverse(SessionId, String) ->
     gen_server:call(?SERVER, {reverse, SessionId, String}).
 
--spec delete_session(list()) -> ok.
 delete_session(SessionId) ->
     gen_server:call(?SERVER, {delete_session, SessionId}).
 
--spec sessions_serviced() -> integer().
 sessions_serviced() ->
     gen_server:call(?SERVER, sessions_serviced).
 
--spec active_sessions() -> integer().
 active_sessions() ->
     gen_server:call(?SERVER, active_sessions).
 
@@ -91,7 +88,6 @@ crash_server() ->
 %% ------------------------------------------------------------------
 
 -record(state, {sessions_serviced = 0 :: integer(), sessions = undefined :: list({reference(), pid()})}).
--type state() :: #state{}.
 
 %% @doc This function gets called when the server process will be
 %% started. It is like its "constructor". The second element of the
@@ -99,7 +95,6 @@ crash_server() ->
 %% lifetime of the server. Think of that state as being what would
 %% hold the member variables of a classical OO object. This function
 %% gets called in the "thread" context of the newly spawned server.
--spec init(_) -> {ok, state()}.
 init(_Args) ->
     io:format("Inside reverserl_server's init function~n"),
     
@@ -115,7 +110,6 @@ init(_Args) ->
     {ok, #state{sessions = SessionTable}}.
 
 
--spec handle_call(_, _, state()) -> {reply, ok, state()}.
 handle_call(sessions_serviced, _From, State) ->
     {reply, State#state.sessions_serviced, State};
 handle_call(active_sessions, _From, State) ->
@@ -125,7 +119,7 @@ handle_call(create_session, _From, State) ->
     % Spawn (and link) a new session process
     {ok, SessionPid} = reverserl_session:start_link(30000),
     % Note: the following will not be globally unique so don't go
-    % to production with it...
+    % to production with it... (it should only be unique for this node)
     {A, B, C} = erlang:now(),
     SessionId = lists:flatten(io_lib:format("~p~p~p", [A, B, C])),
     io:format("Creating session ~p~n", [SessionId]),
@@ -159,11 +153,9 @@ handle_call({delete_session, SessionId}, _From, State) ->
     end,
     {reply, Result, State}.
 
--spec handle_cast(_, state()) -> {noreply, state()}.
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
--spec handle_info(_, state()) -> {noreply, state()}.
 handle_info({'EXIT', SessionPid, _Reason}, State) ->
     case find_session_id(SessionPid, State#state.sessions) of
         undefined ->
@@ -177,7 +169,6 @@ handle_info({'EXIT', SessionPid, _Reason}, State) ->
 
 %% @doc This gets called when the process will be terminated. Like
 %% an object destructor.
--spec terminate(_, state()) -> ok.
 terminate(_Reason, _State) ->
     io:format("Inside reverserl_server's terminate function~n"),
     ok.
@@ -187,7 +178,6 @@ terminate(_Reason, _State) ->
 %% the current version's state and upgrade/downgrade it accordingly
 %% when changing the version. The new state is then returned in the
 %% result tuple.
--spec code_change(_, state(), _) -> {ok, state()}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 

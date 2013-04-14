@@ -27,7 +27,7 @@ reverserl_simple_test_() ->
      [
          fun() ->
             % Start by creating a new session
-            {ok, {{_HttpVersion, 201, _Reason}, _Headers, Body}} = httpc:request(post, {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
+            {ok, {{_HttpVersion, 201, _Reason}, _Headers, Body}} = httpc:request('put', {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
             SessionId = lists:flatten(Body),
 
             % The SessionId should not be empty
@@ -59,7 +59,7 @@ reverserl_multiple_test_() ->
         fun() ->
             % Start by creating 20 sessions
             F = fun(_, Acc) ->
-                {ok, {{_, 201, _}, _, Body}} = httpc:request(post, {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
+                {ok, {{_, 201, _}, _, Body}} = httpc:request('put', {"http://127.0.0.1:8080/reverserl", [], [], []}, [], []),
                 SessionId = lists:flatten(Body),
                 [SessionId|Acc]
             end,

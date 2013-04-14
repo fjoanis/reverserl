@@ -1,3 +1,5 @@
+%% @author Francis (Ottawa Erlang)
+
 -module(reverserl_http_handler).
 
 -export([init/3]).
@@ -21,7 +23,7 @@ handle(Req, State) ->
     end,
 
     {ok, Reply} = case {Method, SessionId} of
-        {<<"POST">>, undefined} ->
+        {<<"PUT">>, undefined} ->
             handle_post(Req);
         {<<"GET">>, undefined} ->
             io:format("Session has to be supplied~n"),
